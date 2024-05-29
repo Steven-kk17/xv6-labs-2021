@@ -15,6 +15,7 @@ extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
 
 struct run {
+  // 一个简单的链表，用于跟踪空闲的内存页
   struct run *next;
 };
 
@@ -79,4 +80,21 @@ kalloc(void)
   if(r)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
+}
+
+uint64
+freemem()
+{
+  struct run *r;
+  uint64 cnt = 0;
+
+  acquire(&kmem.lock);
+  r = kmem.freelist;
+  while(r) {
+    cnt++;
+    r = r->next;
+  }
+  release(&kmem.lock);
+
+  return cnt * PGSIZE;
 }

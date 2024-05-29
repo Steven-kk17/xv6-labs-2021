@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -95,3 +96,35 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_trace(void)
+{
+  int mask;
+  if(argint(0, &mask) < 0)
+    return -1;
+  struct proc *p = myproc();
+  p->mask = mask;
+  return 0;
+}
+
+// sys_info需要将系统信息填充到用户空间的sysinfo结构体中，参阅sysfile.c & file.c
+uint64
+sys_sysinfo(void)
+{
+  struct proc *p = myproc();
+  uint64 addr;
+  struct sysinfo info;
+
+  if (argaddr(0, &addr) < 0)
+    return -1;
+
+  info.nproc = nproc();
+  info.freemem = freemem();
+
+  if(copyout(p->pagetable, addr, (char *)&info, sizeof(info)) < 0) // 从kernel复制到user space的addr
+    return -1;
+  return 0;
+}
+
+// fuck you, is it up2date?

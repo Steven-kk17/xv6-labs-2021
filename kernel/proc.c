@@ -141,6 +141,8 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  // for tracing initialization
+  p->mask = 0;
   return p;
 }
 
@@ -294,6 +296,9 @@ fork(void)
 
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;
+
+  // copy parent's mask to child
+  np->mask = p->mask;
 
   // increment reference counts on open file descriptors.
   for(i = 0; i < NOFILE; i++)
@@ -653,4 +658,17 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+// 获取空闲进程数
+uint64
+nproc(void)
+{
+  struct proc *p;
+  uint64 num = 0;
+  for(p = proc; p < &proc[NPROC]; p++){
+    if(p->state != UNUSED)
+      num++;
+  }
+  return num;
 }

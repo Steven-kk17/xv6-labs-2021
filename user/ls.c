@@ -35,15 +35,18 @@ ls(char *path)
     return;
   }
 
+  // Get the file's status，and store it in st.
   if(fstat(fd, &st) < 0){
     fprintf(2, "ls: cannot stat %s\n", path);
     close(fd);
     return;
   }
+  // This is for debug 2024.5.1
+  // printf("file type: %d\n", st.type);
 
   switch(st.type){
   case T_FILE:
-    printf("%s %d %d %l\n", fmtname(path), st.type, st.ino, st.size);
+    printf("%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
     break;
 
   case T_DIR:
@@ -59,6 +62,7 @@ ls(char *path)
         continue;
       memmove(p, de.name, DIRSIZ);
       p[DIRSIZ] = 0;
+      // 0 success, -1 fail
       if(stat(buf, &st) < 0){
         printf("ls: cannot stat %s\n", buf);
         continue;
