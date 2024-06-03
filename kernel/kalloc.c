@@ -2,6 +2,8 @@
 // kernel stacks, page-table pages,
 // and pipe buffers. Allocates whole 4096-byte pages.
 
+// fuck you - to check ssh connection
+
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
