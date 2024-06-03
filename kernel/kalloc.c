@@ -56,6 +56,7 @@ kfree(void *pa)
 
   r = (struct run*)pa;
 
+  // 加入到空闲链表中（头部插入）
   acquire(&kmem.lock);
   r->next = kmem.freelist;
   kmem.freelist = r;

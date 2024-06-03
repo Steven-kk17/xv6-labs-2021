@@ -18,18 +18,21 @@
 // PHYSTOP -- end RAM used by the kernel
 
 // qemu puts UART registers here in physical memory.
+// 定义了 UART 寄存器的物理地址和中断请求号。UART 是一个串行通信接口，常用于系统的输入/输出。
 #define UART0 0x10000000L
 #define UART0_IRQ 10
 
 // virtio mmio interface
+// 定义了 virtio MMIO 接口的物理地址和中断请求号。virtio 是一个虚拟化的 I/O 接口，用于 qemu 虚拟机和宿主机的通信。
 #define VIRTIO0 0x10001000
 #define VIRTIO0_IRQ 1
 
 #ifdef LAB_NET
-#define E1000_IRQ 33
+#define E1000_IRQ 33 // 这是网络实验中使用的中断请求号。
 #endif
 
 // core local interruptor (CLINT), which contains the timer.
+// CLINT 是 RISC-V 系统中用于处理中断的组件。CLINT_MTIMECMP 和 CLINT_MTIME 是与定时器相关的宏。
 #define CLINT 0x2000000L
 #define CLINT_MTIMECMP(hartid) (CLINT + 0x4000 + 8*(hartid))
 #define CLINT_MTIME (CLINT + 0xBFF8) // cycles since boot.
@@ -57,13 +60,16 @@
 
 // map kernel stacks beneath the trampoline,
 // each surrounded by invalid guard pages.
+// p 是进程的 PID，KSTACK(p) 是进程 p 的内核栈的基地址。
+// 看figure3.3就能理解这个地址为什么是这么算的了(3*pagesize是因为1个trampline page和1个guard page和1个page大小的Kstack0)
+// 之后每个进程只要1个page的guard page和1个page大小的Kstack就行（以上顺序都是从大地址往小地址）
 #define KSTACK(p) (TRAMPOLINE - (p)*2*PGSIZE - 3*PGSIZE)
 
 // User memory layout.
 // Address zero first:
 //   text
 //   original data and bss
-//   fixed-size stack
+//   fixed-size stack(1 page-size)
 //   expandable heap
 //   ...
 //   USYSCALL (shared with kernel)
