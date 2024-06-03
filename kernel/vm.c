@@ -84,9 +84,9 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
     panic("walk");
 
   for(int level = 2; level > 0; level--) {
-    pte_t *pte = &pagetable[PX(level, va)];
+    pte_t *pte = &pagetable[PX(level, va)]; // get the PTE for the current level
     if(*pte & PTE_V) {
-      pagetable = (pagetable_t)PTE2PA(*pte);
+      pagetable = (pagetable_t)PTE2PA(*pte); // get the next level of page table, pagetable is a pointer to the next level of page table
     } else {
       if(!alloc || (pagetable = (pde_t*)kalloc()) == 0)
         return 0;
@@ -176,7 +176,7 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
       panic("uvmunmap: walk");
     if((*pte & PTE_V) == 0)
       panic("uvmunmap: not mapped");
-    if(PTE_FLAGS(*pte) == PTE_V)
+    if(PTE_FLAGS(*pte) == PTE_V) // 确认该页表条目对应一个叶子页 (权限位 R, W, X 不全为零)
       panic("uvmunmap: not a leaf");
     if(do_free){
       uint64 pa = PTE2PA(*pte);
