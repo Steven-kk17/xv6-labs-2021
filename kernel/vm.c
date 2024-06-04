@@ -229,7 +229,7 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
   oldsz = PGROUNDUP(oldsz);
   for(a = oldsz; a < newsz; a += PGSIZE){
     mem = kalloc();
-    if(mem == 0){
+    if(mem == 0){ // 如果内存分配失败，释放之前分配的内存
       uvmdealloc(pagetable, a, oldsz);
       return 0;
     }
@@ -250,7 +250,7 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 uint64
 uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 {
-  if(newsz >= oldsz)
+  if(newsz >= oldsz) // 只处理内存缩小的情况
     return oldsz;
 
   if(PGROUNDUP(newsz) < PGROUNDUP(oldsz)){

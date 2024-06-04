@@ -18,7 +18,8 @@ struct spinlock pid_lock;
 extern void forkret(void);
 static void freeproc(struct proc *p);
 
-extern char trampoline[]; // trampoline.S
+extern char 
+trampoline[]; // trampoline.S
 
 // helps ensure that wakeups of wait()ing
 // parents are not lost. helps obey the
@@ -119,6 +120,14 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  
+  // Allocate a USYSCALL page.
+  if((p->usyscall = (struct usyscall *)kalloc()) == 0) {
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  p->usyscall->pid = p->pid;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -149,7 +158,12 @@ found:
 // p->lock must be held.
 static void
 freeproc(struct proc *p)
-{
+{ 
+  if(p->usyscall){
+    uvmunmap(p->pagetable, USYSCALL, 1, 0);
+    kfree((void*)p->usyscall);
+  }
+    
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
@@ -192,6 +206,15 @@ proc_pagetable(struct proc *p)
   if(mappages(pagetable, TRAPFRAME, PGSIZE,
               (uint64)(p->trapframe), PTE_R | PTE_W) < 0){
     uvmunmap(pagetable, TRAMPOLINE, 1, 0);
+    uvmfree(pagetable, 0);
+    return 0;
+  }
+
+  // map the usyscall page for the use of user program.
+  if(mappages(pagetable, USYSCALL, PGSIZE,
+              (uint64)p->usyscall, PTE_R | PTE_U) < 0){
+    uvmunmap(pagetable, TRAMPOLINE, 1, 0);
+    uvmunmap(pagetable, TRAPFRAME, 1, 0);
     uvmfree(pagetable, 0);
     return 0;
   }
