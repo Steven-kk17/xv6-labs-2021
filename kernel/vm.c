@@ -170,7 +170,6 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 
   if((va % PGSIZE) != 0)
     panic("uvmunmap: not aligned");
-
   for(a = va; a < va + npages*PGSIZE; a += PGSIZE){
     if((pte = walk(pagetable, a, 0)) == 0)
       panic("uvmunmap: walk");
@@ -275,6 +274,9 @@ freewalk(pagetable_t pagetable)
       freewalk((pagetable_t)child);
       pagetable[i] = 0;
     } else if(pte & PTE_V){
+      // 如果PTE是有效的，但不指向一个子页表，那么它应该是一个叶子映射。
+      // 然而，因为函数假设所有的叶子映射已经被移除，
+      // 所以如果遇到一个叶子映射，函数会调用panic函数来报告一个错误
       panic("freewalk: leaf");
     }
   }

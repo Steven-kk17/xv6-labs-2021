@@ -123,6 +123,7 @@ found:
   
   // Allocate a USYSCALL page.
   if((p->usyscall = (struct usyscall *)kalloc()) == 0) {
+    printf("allocproc out of memory\n");
     freeproc(p);
     release(&p->lock);
     return 0;
@@ -149,7 +150,6 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-
   return p;
 }
 
@@ -159,11 +159,10 @@ found:
 static void
 freeproc(struct proc *p)
 { 
-  if(p->usyscall){
-    uvmunmap(p->pagetable, USYSCALL, 1, 0);
+  // printf("freeproc: pid=%d\n", p->usyscall->pid);
+  if(p->usyscall)
     kfree((void*)p->usyscall);
-  }
-    
+  p->usyscall = 0;
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
@@ -229,6 +228,7 @@ proc_freepagetable(pagetable_t pagetable, uint64 sz)
 {
   uvmunmap(pagetable, TRAMPOLINE, 1, 0);
   uvmunmap(pagetable, TRAPFRAME, 1, 0);
+  uvmunmap(pagetable, USYSCALL, 1, 0);
   uvmfree(pagetable, sz);
 }
 
