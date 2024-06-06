@@ -43,7 +43,7 @@ usertrap(void)
 
   // send interrupts and exceptions to kerneltrap(),
   // since we're now in the kernel.
-  w_stvec((uint64)kernelvec);
+  w_stvec((uint64)kernelvec); // 将stvec寄存器的值设置为kernelvec的地址
 
   struct proc *p = myproc();
   
@@ -51,7 +51,7 @@ usertrap(void)
   p->trapframe->epc = r_sepc();
   
   if(r_scause() == 8){
-    // system call
+    // 1. system call
 
     if(p->killed)
       exit(-1);
@@ -66,8 +66,9 @@ usertrap(void)
 
     syscall();
   } else if((which_dev = devintr()) != 0){
-    // ok
+    // 2. devintr()处理外部中断和软中断(device interrupt)
   } else {
+    // 3. exception
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     p->killed = 1;
@@ -124,8 +125,17 @@ usertrapret(void)
   // jump to trampoline.S at the top of memory, which 
   // switches to the user page table, restores user registers,
   // and switches to user mode with sret.
+  /* 这里涉及到了传参
+  在RISC-V架构中，函数的前两个参数是通过a0和a1寄存器传递的。
+  所以，这段代码实际上是将TRAPFRAME的值放入a0寄存器，将satp的值放入a1寄存器，然后跳转到userret函数。
+  在userret函数中，会从a0寄存器获取TRAPFRAME的值，
+  从a1寄存器获取satp的值.
+  然后，userret函数会切换到用户页表，恢复用户寄存器的值，然后使用sret指令切换到用户模式。
+  */ 
   uint64 fn = TRAMPOLINE + (userret - trampoline);
   ((void (*)(uint64,uint64))fn)(TRAPFRAME, satp);
+  // 语法讲解：fn 是一个函数指针，它指向的函数地址是 TRAMPOLINE + (userret - trampoline)。
+  // 将 fn 转换为一个接受两个 uint64 类型参数并且没有返回值的函数指针，然后调用这个函数，并传递 TRAPFRAME 和 satp 两个参数。
 }
 
 // interrupts and exceptions from kernel code go here via kernelvec,

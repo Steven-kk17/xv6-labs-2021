@@ -22,14 +22,14 @@ uservec:
         #
         # sscratch points to where the process's p->trapframe is
         # mapped into user space, at TRAPFRAME.
-        #
+        # p->trapframe 是实际的物理地址，sscratch是虚拟地址
         
 	# swap a0 and sscratch
         # so that a0 is TRAPFRAME
-        csrrw a0, sscratch, a0
+        csrrw a0, sscratch, a0 # a0现在存的是TRAPFRAME，是p->trapframe的！虚拟！地址，sscratch存的是a0的值
 
-        # save the user registers in TRAPFRAME
-        sd ra, 40(a0)
+        # save the user registers in TRAPFRAME，一共32个寄存器（算上a0）
+        sd ra, 40(a0) #将ra寄存器中的值存储到地址a0+40指向的内存位置。
         sd sp, 48(a0)
         sd gp, 56(a0)
         sd tp, 64(a0)
