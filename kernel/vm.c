@@ -436,12 +436,28 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 }
 
 // lab3: print a page table
-void
-vmprint(pagetable_t pagetable)
+// 辅助函数，用于递归调用
+void vmprint_recursive(pagetable_t pagetable, int level)
 {
-  printf("page table %p\n", pagetable);
   for(int i = 0; i < 512; i++){
     pte_t pte = pagetable[i];
-    if((pte & PTE_V) == 0)
+    if((pte & PTE_V)  && (pte & (PTE_R|PTE_W|PTE_X)) == 0){
+      // pte有效并且不可读不可写不可执行，
+      // 则是指向下一级页表的pte
+      if(level == 1)
+        printf("..%d: pte %p pa %p\n", i, pte, PTE2PA(pte));
+      else if(level == 2)
+        printf(".. ..%d: pte %p pa %p\n", i, pte, PTE2PA(pte));
+      vmprint_recursive((pagetable_t)PTE2PA(pte), level + 1);  // 递归调用，level加1
+    }else if(pte & PTE_V){
+      // pte有效，是一个叶子页
+      printf(".. .. ..%d: pte %p pa %p\n", i, pte, PTE2PA(pte));
+    }
   }
+}
+
+void vmprint(pagetable_t pagetable)
+{
+  printf("page table %p\n", pagetable);
+  vmprint_recursive(pagetable, 1);  // level初始化为1
 }
