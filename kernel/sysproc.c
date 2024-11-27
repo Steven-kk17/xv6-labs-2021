@@ -85,12 +85,13 @@ sys_pgaccess(void)
 {
   uint64 start_va;
   int num_pages;
-  uint64 user_mask_addr;
+  uint64 user_bitmask_addr;
 
-  if (argaddr(0, &start_va) < 0 || argint(1, &num_pages) < 0 || argaddr(2, &user_mask_addr) < 0) {
+  // 从trapframe中获取参数。分别是开
+  if (argaddr(0, &start_va) < 0 || argint(1, &num_pages) < 0 || argaddr(2, &user_bitmask_addr) < 0) {
       return -1;
   }
-  pgacess()
+  pgacess(start_va, num_pages, user_bitmask_addr);
   return 0;
 }
 #endif
