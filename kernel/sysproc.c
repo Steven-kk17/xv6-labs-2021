@@ -75,12 +75,22 @@ sys_sleep(void)
   return 0;
 }
 
-
+// The system call takes three arguments. 
+// First, it takes the starting virtual address of the first user page to check. 
+// Second, it takes the number of pages to check. 
+// Finally, it takes a user address to a buffer to store the results into a bitmask
 #ifdef LAB_PGTBL
 int
 sys_pgaccess(void)
 {
-  // lab pgtbl: your code here.
+  uint64 start_va;
+  int num_pages;
+  uint64 user_mask_addr;
+
+  if (argaddr(0, &start_va) < 0 || argint(1, &num_pages) < 0 || argaddr(2, &user_mask_addr) < 0) {
+      return -1;
+  }
+  pgacess()
   return 0;
 }
 #endif
